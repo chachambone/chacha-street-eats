@@ -1,5 +1,4 @@
 import React from 'react';
-// Remove the App.css import
 
 function App() {
   return (
@@ -10,22 +9,17 @@ function App() {
             🌶️ CHACHA STREET EATS 🍟
           </h1>
           <p className="text-xl text-white mb-8">
-            Your React + Tailwind frontend is ready!
+            Welcome to your frontend! Tailwind CSS is working if this looks styled.
           </p>
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Success! 🎉
+              Ready to Build!
             </h2>
-            <p className="text-gray-600 mb-6">
-              Tailwind CSS is working via CDN. No build errors!
+            <p className="text-gray-600">
+              Your React + Tailwind frontend is set up. Let's start building components!
             </p>
-            <div className="space-y-2 text-sm text-green-600">
-              <p>✅ CDN Loaded</p>
-              <p>✅ Tailwind Working</p>
-              <p>✅ No PostCSS Errors</p>
-            </div>
             <button className="mt-6 bg-yellow-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-yellow-600 transition duration-300">
-              Let's Build Chacha Street Eats!
+              Get Started
             </button>
           </div>
         </div>
