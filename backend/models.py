@@ -1,6 +1,6 @@
 from app import db
 from datetime import datetime
-from flask_login import UserMixin  # We'll use Flask-Login later for auth
+# from flask_login import UserMixin  # We'll use Flask-Login later for auth
 
 # Optional: Separate table for categories (makes admin easier & avoids typos)
 class Category(db.Model):
@@ -44,7 +44,7 @@ class MenuItem(db.Model):
         }
 
 
-class User(db.Model, UserMixin):
+class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
