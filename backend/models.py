@@ -1,107 +1,252 @@
-from app import db
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-# from flask_login import UserMixin  # We'll use Flask-Login later for auth
+from sqlalchemy import MetaData
+from sqlalchemy import JSON
 
-# Optional: Separate table for categories (makes admin easier & avoids typos)
-class Category(db.Model):
-    __tablename__ = 'categories'
-    
+# ======================
+# Database setup
+# ======================
+metadata = MetaData()
+db = SQLAlchemy(metadata=metadata)
+
+# ======================
+# Constants
+# ======================
+ROLE_CHOICES = ("admin", "order_manager", "customer")
+ORDER_STATUS_CHOICES = ("pending", "processing", "out_for_delivery", "delivered", "cancelled")
+
+# ======================
+# User Model
+# ======================
+class User(db.Model):
+    __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)  # e.g., "Snacks", "Mains"
-    display_order = db.Column(db.Integer, default=0)  # For sorting on frontend
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
+    role = db.Column(db.String(20), default="customer")
+    blocked = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationship to menu items
-    items = db.relationship('MenuItem', backref='category_ref', lazy=True)
+    # Relationships
+    cart_items = db.relationship(
+        "CartItem", back_populates="user", cascade="all, delete-orphan"
+    )
+    orders = db.relationship(
+        "Order", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def to_dict(self):
-        return {"id": self.id, "name": self.name, "display_order": self.display_order}
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "blocked": self.blocked,
+            "created_at": self.created_at.isoformat(),
+        }
 
 
-class MenuItem(db.Model):
-    __tablename__ = 'menu_items'
+# ======================
+# Category Model
+# ======================
+class Category(db.Model):
+    __tablename__ = "categories"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text)
-    price = db.Column(db.Float, nullable=False)  # in KSh
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
-    spice_level = db.Column(db.Integer, default=0)  # 0-3
-    is_vegetarian = db.Column(db.Boolean, default=False)
-    is_available = db.Column(db.Boolean, default=True)  # For out-of-stock
-    image_url = db.Column(db.String(500))
+    name = db.Column(db.String(50), unique=True, nullable=False)   # internal key
+    label = db.Column(db.String(50), nullable=False)               # display name
+    icon = db.Column(db.String(20))                                # emoji / icon
+
+    # Relationships
+    products = db.relationship(
+        "Product", back_populates="category", cascade="all, delete-orphan"
+    )
 
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
-            "description": self.description or "",
-            "price": self.price,
-            "category": self.category_ref.name if self.category_ref else "",
-            "spice_level": self.spice_level,
-            "is_vegetarian": self.is_vegetarian,
-            "is_available": self.is_available,
-            "image_url": self.image_url or ""
+            "label": self.label,
+            "icon": self.icon,
+            "products": [product.to_dict() for product in self.products],
         }
 
 
-class User(db.Model):
-    __tablename__ = 'users'
+# ======================
+# Product Model (Street Eats Menu Items)
+# ======================
+class Product(db.Model):
+    __tablename__ = "products"
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    phone = db.Column(db.String(20))  # Optional but useful for delivery
-    password_hash = db.Column(db.String(256), nullable=False)
-    name = db.Column(db.String(100))
-    address = db.Column(db.Text)  # Default delivery address
-    is_admin = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(db.String(120), nullable=False)
+    price = db.Column(db.Float, nullable=False)  # KES
+    image = db.Column(db.String(255))
+    description = db.Column(db.Text)
+    in_stock = db.Column(db.Boolean, default=True)
+    rating = db.Column(db.Float, default=0.0)
+    reviews = db.Column(db.Integer, default=0)
+
+    category_id = db.Column(
+        db.Integer, db.ForeignKey("categories.id"), nullable=False
+    )
 
     # Relationships
-    orders = db.relationship('Order', backref='user', lazy=True)
-
-
-class CartItem(db.Model):
-    __tablename__ = 'cart_items'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    menu_item_id = db.Column(db.Integer, db.ForeignKey('menu_items.id'), nullable=False)
-    quantity = db.Column(db.Integer, default=1)
-    
-    # Relationships
-    menu_item = db.relationship('MenuItem')
+    category = db.relationship("Category", back_populates="products")
+    cart_items = db.relationship(
+        "CartItem", back_populates="product", cascade="all, delete-orphan"
+    )
+    order_items = db.relationship(
+        "OrderItem", back_populates="product", cascade="all, delete-orphan"
+    )
 
     def to_dict(self):
         return {
             "id": self.id,
-            "menu_item": self.menu_item.to_dict(),
-            "quantity": self.quantity
+            "name": self.name,
+            "category": self.category.name if self.category else None,
+            "price": self.price,
+            "image": self.image,
+            "description": self.description,
+            "inStock": self.in_stock,
+            "rating": self.rating,
+            "reviews": self.reviews,
         }
 
 
+# ======================
+# Cart Item Model
+# ======================
+class CartItem(db.Model):
+    __tablename__ = "cart_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
+
+    # Relationships
+    user = db.relationship("User", back_populates="cart_items")
+    product = db.relationship("Product", back_populates="cart_items")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "quantity": self.quantity,
+            "product": self.product.to_dict() if self.product else None,
+        }
+
+
+# ======================
+# Order Model
+# ======================
 class Order(db.Model):
-    __tablename__ = 'orders'
+    __tablename__ = "orders"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    total_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, confirmed, preparing, out_for_delivery, delivered, cancelled
-    delivery_address = db.Column(db.Text, nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
-    notes = db.Column(db.Text)  # Special instructions
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default="pending")
+    shipping_info = db.Column(JSON, nullable=True)
+    total_price = db.Column(db.Float, nullable=False)
 
-    # Relationship to order items
-    items = db.relationship('OrderItem', backref='order', lazy=True)
+    # Relationships
+    user = db.relationship("User", back_populates="orders")
+    order_items = db.relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan"
+    )
+    invoice = db.relationship(
+        "Invoice", back_populates="order", uselist=False
+    )
+
+    def to_dict(self):
+        shipping_info = self.shipping_info or {}
+
+        return {
+            "id": self.id,
+            "userId": self.user_id,
+            "user": self.user.username if self.user else None,
+            "createdAt": self.created_at.isoformat(),
+            "status": self.status,
+            "subtotal": float(
+                sum(item.price_at_order * item.quantity for item in self.order_items)
+            ),
+            "shipping": float(shipping_info.get("shipping", 0)),
+            "total": float(self.total_price),
+            "shippingInfo": shipping_info,
+            "items": [
+                {
+                    "id": item.product_id,
+                    "name": item.product.name if item.product else None,
+                    "image": item.product.image if item.product else None,
+                    "quantity": item.quantity,
+                    "price": float(item.price_at_order),
+                }
+                for item in self.order_items
+            ],
+        }
 
 
+# ======================
+# Order Item Model
+# ======================
 class OrderItem(db.Model):
-    __tablename__ = 'order_items'
+    __tablename__ = "order_items"
 
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
-    menu_item_id = db.Column(db.Integer, db.ForeignKey('menu_items.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    price_at_time = db.Column(db.Float, nullable=False)  # Snapshot of price when ordered
+    price_at_order = db.Column(db.Float, nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey("orders.id"))
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"))
 
-    menu_item = db.relationship('MenuItem')
+    # Relationships
+    order = db.relationship("Order", back_populates="order_items")
+    product = db.relationship("Product", back_populates="order_items")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "quantity": self.quantity,
+            "price_at_order": self.price_at_order,
+            "product": self.product.to_dict() if self.product else None,
+        }
+
+
+# ======================
+# Invoice Model
+# ======================
+class Invoice(db.Model):
+    __tablename__ = "invoices"
+
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_number = db.Column(db.String(100), unique=True, nullable=False)
+    issued_at = db.Column(db.DateTime, default=datetime.utcnow)
+    pdf_url = db.Column(db.String(255))
+    order_id = db.Column(
+        db.Integer, db.ForeignKey("orders.id"), unique=True
+    )
+
+    # Relationships
+    order = db.relationship("Order", back_populates="invoice")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "invoice_number": self.invoice_number,
+            "issued_at": self.issued_at.isoformat(),
+            "pdf_url": self.pdf_url,
+            "order_id": self.order_id,
+        }
+
+
+# ======================
+# Token Blocklist (JWT Logout / Security)
+# ======================
+class TokenBlocklist(db.Model):
+    __tablename__ = "token_blocklist"
+
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
