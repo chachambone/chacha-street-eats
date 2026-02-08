@@ -1,5 +1,6 @@
 # backend/views/orders.py
 from flask import Blueprint, jsonify
+from flask import current_app
 
 orders_bp = Blueprint('orders', __name__)
 

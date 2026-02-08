@@ -1,36 +1,14 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+# seed.py - Uses the REAL db from app.py (no new SQLAlchemy instance!)
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chacha.db'  # flat file in backend/
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
-
-# Define minimal classes just for seeding (to avoid import issues)
-class Category(db.Model):
-    __tablename__ = 'categories'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-    label = db.Column(db.String(50), nullable=False)
-    icon = db.Column(db.String(20))
-
-class Product(db.Model):
-    __tablename__ = 'products'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    image = db.Column(db.String(255))
-    description = db.Column(db.Text)
-    in_stock = db.Column(db.Boolean, default=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+from app import app, db                        # ← this is the key line
+from models import Category, MenuItem          # your real models
 
 with app.app_context():
-    db.drop_all()  # Optional: reset for clean seed
-    db.create_all()
+    # Optional: reset DB for clean seed (uncomment if you want fresh start)
+    # db.drop_all()
+    db.create_all()  # Creates tables if they don't exist
 
-    # Seed categories
+    # Seed categories (skip duplicates)
     categories_data = [
         {"name": "snacks", "label": "Snacks & Starters", "icon": "🥟"},
         {"name": "street_favorites", "label": "Street Favorites", "icon": "🌭"},
@@ -39,24 +17,85 @@ with app.app_context():
 
     cat_map = {}
     for data in categories_data:
+        existing = Category.query.filter_by(name=data["name"]).first()
+        if existing:
+            cat_map[data["name"]] = existing.id
+            continue
         cat = Category(**data)
         db.session.add(cat)
-        db.session.flush()  # Get ID
+        db.session.flush()
         cat_map[data["name"]] = cat.id
 
-    # Seed products (your Kenyan menu)
-    products_data = [
-        {"name": "Nyama Choma (Goat)", "price": 1000, "image": "https://i0.wp.com/kaluhiskitchen.com/wp-content/uploads/2015/09/DSC_0096.jpg", "description": "Slow-grilled goat with ugali & sukuma wiki", "in_stock": True, "category_id": cat_map["mains"]},
-        {"name": "Beef Samosas", "price": 100, "image": "https://www.jayne-rain.com/wp-content/uploads/2020/04/Kenyan-Beef-Samosa-Square.jpg", "description": "Crispy spiced beef triangles", "in_stock": True, "category_id": cat_map["snacks"]},
-        {"name": "Smokie Pasua", "price": 150, "image": "https://nairobikitchen.com/wp-content/uploads/2018/10/IMG_20181005_192242.jpg", "description": "Smokie stuffed with kachumbari", "in_stock": True, "category_id": cat_map["street_favorites"]},
-        {"name": "Bhajia", "price": 150, "image": "https://www.chefspencil.com/wp-content/uploads/Kenyan-Bhajia-1.jpg", "description": "Crispy potato fritters", "in_stock": True, "category_id": cat_map["snacks"]},
-        {"name": "Mandazi", "price": 50, "image": "https://www.africanbites.com/wp-content/uploads/2019/03/IMG_0399.jpg", "description": "Fluffy coconut dough triangles", "in_stock": True, "category_id": cat_map["snacks"]},
-        # Add more if you want
+    # Seed menu items - Kaluhi’s Kitchen images (tested & loading)
+    menu_data = [
+        {
+            "name": "Nyama Choma (Goat)",
+            "price": 1000,
+            "image_url": "https://i0.wp.com/kaluhiskitchen.com/wp-content/uploads/2015/09/DSC_0096.jpg",
+            "description": "Slow-grilled goat with ugali & sukuma wiki",
+            "in_stock": True,
+            "spice_level": 1,
+            "is_vegetarian": False,
+            "category_id": cat_map["mains"]
+        },
+        {
+            "name": "Beef Samosas",
+            "price": 100,
+            "image_url": "https://www.jayne-rain.com/wp-content/uploads/2020/04/Kenyan-Beef-Samosa-Square.jpg",
+            "description": "Crispy spiced beef triangles",
+            "in_stock": True,
+            "spice_level": 2,
+            "is_vegetarian": False,
+            "category_id": cat_map["snacks"]
+        },
+        {
+            "name": "Smokie Pasua",
+            "price": 150,
+            "image_url": "https://nairobikitchen.com/wp-content/uploads/2018/10/IMG_20181005_192242.jpg",
+            "description": "Smokie stuffed with kachumbari – street royalty",
+            "in_stock": True,
+            "spice_level": 2,
+            "is_vegetarian": False,
+            "category_id": cat_map["street_favorites"]
+        },
+        {
+            "name": "Bhajia",
+            "price": 150,
+            "image_url": "https://www.chefspencil.com/wp-content/uploads/Kenyan-Bhajia-1.jpg",
+            "description": "Crispy potato fritters, coastal style with chili dip",
+            "in_stock": True,
+            "spice_level": 2,
+            "is_vegetarian": True,
+            "category_id": cat_map["snacks"]
+        },
+        {
+            "name": "Mandazi",
+            "price": 50,
+            "image_url": "https://www.africanbites.com/wp-content/uploads/2019/03/IMG_0399.jpg",
+            "description": "Fluffy coconut-cardamom dough triangles",
+            "in_stock": True,
+            "spice_level": 0,
+            "is_vegetarian": True,
+            "category_id": cat_map["snacks"]
+        },
+        {
+            "name": "Chips Mayai",
+            "price": 250,
+            "image_url": "https://nairobikitchen.com/wp-content/uploads/2019/02/IMG_20190222_185622.jpg",
+            "description": "Fries cooked into a fluffy omelette – pure comfort",
+            "in_stock": True,
+            "spice_level": 1,
+            "is_vegetarian": True,
+            "category_id": cat_map["street_favorites"]
+        },
     ]
 
-    for data in products_data:  # ← fixed typo: products_data not menu_data
-        item = Product(**data)
+    for data in menu_data:
+        existing = MenuItem.query.filter_by(name=data["name"]).first()
+        if existing:
+            continue
+        item = MenuItem(**data)
         db.session.add(item)
 
     db.session.commit()
-    print("Chacha Street Eats fully seeded – categories + products! 🔥🇰🇪")
+    print("Chacha Street Eats fully seeded – categories + menu with Kaluhi’s Kitchen photos! 🔥🇰🇪")
