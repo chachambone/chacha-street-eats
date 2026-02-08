@@ -78,7 +78,7 @@ class Category(db.Model):
 # Product Model (Street Eats Menu Items)
 # ======================
 class Product(db.Model):
-    __tablename__ = "products"
+    __tablename__ = "menu_items"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -94,12 +94,12 @@ class Product(db.Model):
     )
 
     # Relationships
-    category = db.relationship("Category", back_populates="products")
+    category = db.relationship("Category", back_populates="menu_items")
     cart_items = db.relationship(
-        "CartItem", back_populates="product", cascade="all, delete-orphan"
+        "CartItem", back_populates="menu_items", cascade="all, delete-orphan"
     )
     order_items = db.relationship(
-        "OrderItem", back_populates="product", cascade="all, delete-orphan"
+        "OrderItem", back_populates="menu_items", cascade="all, delete-orphan"
     )
 
     def to_dict(self):
