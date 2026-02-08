@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/chacha.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chacha.db'  # flat file in backend/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -16,8 +16,8 @@ class Category(db.Model):
     label = db.Column(db.String(50), nullable=False)
     icon = db.Column(db.String(20))
 
-class MenuItem(db.Model):
-    __tablename__ = 'menu_items'
+class Product(db.Model):
+    __tablename__ = 'products'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     price = db.Column(db.Float, nullable=False)
@@ -54,8 +54,8 @@ with app.app_context():
         # Add more if you want
     ]
 
-    for data in menu_data:
-        item = MenuItem(**data)
+    for data in products_data:  # ← fixed typo: products_data not menu_data
+        item = Product(**data)
         db.session.add(item)
 
     db.session.commit()
