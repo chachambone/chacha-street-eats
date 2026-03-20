@@ -1,7 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
-  const location = useLocation()
+  const location         = useLocation()
+  const { count }        = useCart()
+  const { user, logout } = useAuth()
 
   return (
     <>
@@ -83,6 +87,8 @@ const Navbar = () => {
           font-weight: 700;
           transition: all 0.2s;
           text-decoration: none;
+          display: inline-flex;
+          align-items: center;
         }
         .btn-login:hover { border-color: #E8441A; color: #E8441A; }
         .btn-register {
@@ -96,6 +102,8 @@ const Navbar = () => {
           font-weight: 700;
           transition: all 0.2s;
           text-decoration: none;
+          display: inline-flex;
+          align-items: center;
         }
         .btn-register:hover { background: #E8441A; color: white; }
         .btn-cart {
@@ -109,7 +117,7 @@ const Navbar = () => {
           font-family: 'Nunito', sans-serif;
           font-size: 0.88rem;
           font-weight: 800;
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 0.45rem;
           transition: all 0.2s;
@@ -132,6 +140,20 @@ const Navbar = () => {
           align-items: center;
           justify-content: center;
         }
+        .btn-logout {
+          background: transparent;
+          border: 1.5px solid #ddd;
+          color: #999;
+          padding: 0.5rem 1.3rem;
+          border-radius: 50px;
+          cursor: pointer;
+          font-family: 'Nunito', sans-serif;
+          font-size: 0.88rem;
+          font-weight: 700;
+          transition: all 0.2s;
+        }
+        .btn-logout:hover { border-color: #E8441A; color: #E8441A; }
+
         @media (max-width: 768px) {
           .navbar { padding: 0 1.5rem; }
           .nav-links { display: none; }
@@ -143,26 +165,38 @@ const Navbar = () => {
 
       <nav className="navbar">
 
-        {/* Logo */}
+        {/* ── Logo ── */}
         <Link to="/" className="nav-logo">
           <div className="nav-logo-box">🔥</div>
           <span className="nav-logo-text">Chacha Street Eats</span>
         </Link>
 
-        {/* Middle Links */}
+        {/* ── Middle Links ── */}
         <div className="nav-links">
-          <Link to="/"     className={`nav-link ${location.pathname === '/'     ? 'active' : ''}`}>Home</Link>
-          <Link to="/menu" className={`nav-link ${location.pathname === '/menu' ? 'active' : ''}`}>Our Menu</Link>
-          <span className="nav-link">About Us</span>
-          <span className="nav-link">Contact</span>
+          <Link to="/"        className={`nav-link ${location.pathname === '/'        ? 'active' : ''}`}>Home</Link>
+          <Link to="/menu"    className={`nav-link ${location.pathname === '/menu'    ? 'active' : ''}`}>Our Menu</Link>
+          <Link to="/about"   className={`nav-link ${location.pathname === '/about'   ? 'active' : ''}`}>About Us</Link>
+          <Link to="/contact" className={`nav-link ${location.pathname === '/contact' ? 'active' : ''}`}>Contact</Link>
         </div>
 
-        {/* Right Side */}
+        {/* ── Right Side ── */}
         <div className="nav-right">
-          <Link to="/login"    className="btn-login">Login</Link>
-          <Link to="/register" className="btn-register">Register</Link>
-          <Link to="/cart"     className="btn-cart">
+          {user ? (
+            <>
+              <span style={{ fontSize: '.85rem', fontWeight: 700, color: '#999' }}>
+                Hey {user.username || user.email}! 👋
+              </span>
+              <button className="btn-logout" onClick={logout}>Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login"    className="btn-login">Login</Link>
+              <Link to="/register" className="btn-register">Register</Link>
+            </>
+          )}
+          <Link to="/cart" className="btn-cart">
             🛒 Cart
+            {count > 0 && <span className="cart-badge">{count}</span>}
           </Link>
         </div>
 

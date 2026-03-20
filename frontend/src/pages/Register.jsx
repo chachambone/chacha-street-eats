@@ -1,21 +1,31 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const Register = () => {
-  const [form, setForm] = useState({ name:'', email:'', phone:'', password:'' })
+  const [form,    setForm]    = useState({ name:'', email:'', phone:'', password:'' })
   const [error,   setError]   = useState('')
-  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { register } = useAuth()
+  const navigate = useNavigate()
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.password) {
       return setError('Please fill in all required fields.')
     }
-    // 🔌 We'll connect to Flask API here later
+    setLoading(true)
     setError('')
-    setSuccess('🎉 Account created! Backend connection coming next step.')
+    try {
+      await register(form.name, form.email, form.phone, form.password)
+      navigate('/')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -64,7 +74,8 @@ const Register = () => {
           margin-bottom: 1.8rem; font-weight: 600;
         }
         .auth-link {
-          color: #E8441A; font-weight: 900; text-decoration: none;
+          color: #E8441A; cursor: pointer;
+          font-weight: 900; text-decoration: none;
         }
         .auth-link:hover { text-decoration: underline; }
         .field-label {
@@ -89,12 +100,6 @@ const Register = () => {
           border-radius: 10px; font-size: 0.83rem;
           font-weight: 800; margin-bottom: 1rem;
         }
-        .suc-msg {
-          background: #f0fff4; border: 1px solid #9ae6b4;
-          color: #2D9E5F; padding: 0.7rem 1rem;
-          border-radius: 10px; font-size: 0.83rem;
-          font-weight: 800; margin-bottom: 1rem;
-        }
         .submit-btn {
           width: 100%; padding: 0.9rem; border-radius: 12px; border: none;
           background: #E8441A; color: white;
@@ -104,6 +109,7 @@ const Register = () => {
           box-shadow: 0 4px 16px rgba(232,68,26,0.28);
         }
         .submit-btn:hover { background: #c93510; }
+        .submit-btn:disabled { background: #f0a898; cursor: not-allowed; }
         .auth-footer {
           text-align: center; margin-top: 1.2rem;
           font-size: 0.88rem; color: #999; font-weight: 700;
@@ -138,8 +144,7 @@ const Register = () => {
               <Link to="/login" className="auth-link">Login here →</Link>
             </div>
 
-            {error   && <div className="err-msg">⚠️ {error}</div>}
-            {success && <div className="suc-msg">{success}</div>}
+            {error && <div className="err-msg">⚠️ {error}</div>}
 
             <form onSubmit={handleSubmit}>
               <label className="field-label">Full Name *</label>
@@ -150,7 +155,6 @@ const Register = () => {
                 value={form.name}
                 onChange={handleChange}
               />
-
               <label className="field-label">Email *</label>
               <input
                 className="field-input"
@@ -160,7 +164,6 @@ const Register = () => {
                 value={form.email}
                 onChange={handleChange}
               />
-
               <label className="field-label">Phone</label>
               <input
                 className="field-input"
@@ -169,7 +172,6 @@ const Register = () => {
                 value={form.phone}
                 onChange={handleChange}
               />
-
               <label className="field-label">Password *</label>
               <input
                 className="field-input"
@@ -179,9 +181,8 @@ const Register = () => {
                 value={form.password}
                 onChange={handleChange}
               />
-
-              <button type="submit" className="submit-btn">
-                Create Account →
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Creating account...' : 'Create Account →'}
               </button>
             </form>
 

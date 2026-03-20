@@ -1,16 +1,28 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const Login = () => {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState('')
+  const [loading,  setLoading]  = useState(false)
+  const { login } = useAuth()
+  const navigate  = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email || !password) return setError('Please fill in all fields.')
-    // 🔌 We'll connect to Flask API here later
-    setError('Coming soon — backend connection next step!')
+    setLoading(true)
+    setError('')
+    try {
+      await login(email, password)
+      navigate('/')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Invalid email or password.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -94,6 +106,7 @@ const Login = () => {
           box-shadow: 0 4px 16px rgba(232,68,26,0.28);
         }
         .submit-btn:hover { background: #c93510; }
+        .submit-btn:disabled { background: #f0a898; cursor: not-allowed; }
         .auth-footer {
           text-align: center; margin-top: 1.2rem;
           font-size: 0.88rem; color: #999; font-weight: 700;
@@ -139,7 +152,6 @@ const Login = () => {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
               />
-
               <label className="field-label">Password</label>
               <input
                 className="field-input"
@@ -148,9 +160,8 @@ const Login = () => {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
               />
-
-              <button type="submit" className="submit-btn">
-                Login →
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Logging in...' : 'Login →'}
               </button>
             </form>
 

@@ -1,36 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useCart } from '../context/CartContext'
+import api from '../api'
 
 const CATEGORIES = ['All', 'Grills', 'Street Bites', 'Mains', 'Sweet Treats', 'Drinks']
 
-const MENU_ITEMS = [
-  { id:1,  name:'Nyama Choma',    cat:'Grills',       price:650, spice:2, veg:false, desc:'Slow-roasted goat over open charcoal, served with kachumbari & ugali.',     emoji:'🥩', badge:'🔥 Bestseller' },
-  { id:2,  name:'Mishkaki',       cat:'Grills',       price:200, spice:3, veg:false, desc:'Juicy beef skewers marinated in garlic, ginger, chili & lemon.',            emoji:'🍢', badge:'🔥 Spicy'      },
-  { id:3,  name:'Smokie Pasua',   cat:'Street Bites', price:80,  spice:3, veg:false, desc:'Split smoked sausage stuffed with kachumbari, chili & tomato sauce.',       emoji:'🌭', badge:'⚡ Quick Bite' },
-  { id:4,  name:'Samosa (3 pcs)', cat:'Street Bites', price:120, spice:1, veg:true,  desc:'Crispy golden triangles filled with spiced beef or veggies.',               emoji:'🔺', badge:'🌿 Veg'        },
-  { id:5,  name:'Chips Mwitu',    cat:'Street Bites', price:100, spice:2, veg:true,  desc:'Nairobi street-style fries tossed in kachumbari, chili & lemon.',           emoji:'🍟', badge:'⚡ Quick Bite' },
-  { id:6,  name:'Mutura',         cat:'Street Bites', price:150, spice:4, veg:false, desc:'Traditional Kenyan blood sausage, spiced and fire-grilled to perfection.',  emoji:'🌑', badge:'🌶️ Very Spicy' },
-  { id:7,  name:'Pilau Special',  cat:'Mains',        price:280, spice:2, veg:false, desc:'Fragrant Swahili pilau rice with tender beef & whole spices.',               emoji:'🍚', badge:'🏆 Chef Pick'  },
-  { id:8,  name:'Ugali & Sukuma', cat:'Mains',        price:180, spice:0, veg:true,  desc:'Hearty white maize ugali with sautéed sukuma wiki and tomatoes.',           emoji:'🌽', badge:'🌿 Veg'        },
-  { id:9,  name:'Githeri Bowl',   cat:'Mains',        price:150, spice:1, veg:true,  desc:'Hearty mix of boiled maize & beans fried with tomatoes & spices.',          emoji:'🫘', badge:'💪 Filling'    },
-  { id:10, name:'Mandazi (4pcs)', cat:'Sweet Treats', price:60,  spice:0, veg:true,  desc:'Fluffy East African doughnuts — coconut-kissed and lightly sweet.',         emoji:'🍩', badge:'🍯 Sweet'      },
-  { id:11, name:'Mabuyu',         cat:'Sweet Treats', price:50,  spice:1, veg:true,  desc:'Baobab seeds in tangy-sweet chili sugar syrup. Nairobi nostalgia.',         emoji:'🫐', badge:'🍬 Snack'      },
-  { id:12, name:'Tangawizi Chai', cat:'Drinks',       price:80,  spice:1, veg:true,  desc:'Strong masala ginger tea brewed with fresh tangawizi & spices.',            emoji:'☕', badge:'☕ Warm'        },
-  { id:13, name:'Dawa Cocktail',  cat:'Drinks',       price:350, spice:0, veg:true,  desc:"Kenya's iconic honey-lime-vodka cocktail, stirred with a muddler.",         emoji:'🍹', badge:'🍹 Signature'  },
-  { id:14, name:'Juice ya Matunda', cat:'Drinks',     price:100, spice:0, veg:true,  desc:'Fresh blended fruit juice — mango, passion or mix. Made to order.',        emoji:'🥤', badge:'🌿 Fresh'      },
-]
-
 const Menu = () => {
+  const [menuItems, setMenuItems] = useState([])
   const [activeCat, setActiveCat] = useState('All')
-  const [added, setAdded] = useState({})
+  const [added,     setAdded]     = useState({})
+  const [loading,   setLoading]   = useState(true)
+  const { addToCart } = useCart()
+
+  // Fetch menu from Flask
+  useEffect(() => {
+    api.get('/api/menu')
+      .then(res => setMenuItems(res.data))
+      .catch(err => {
+        console.error('Menu fetch error:', err)
+        setLoading(false)
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   const filtered = activeCat === 'All'
-    ? MENU_ITEMS
-    : MENU_ITEMS.filter(i => i.cat === activeCat)
+    ? menuItems
+    : menuItems.filter(i => i.category === activeCat)
 
   const handleAdd = (item) => {
+    addToCart(item)
     setAdded(prev => ({ ...prev, [item.id]: true }))
     setTimeout(() => setAdded(prev => ({ ...prev, [item.id]: false })), 1200)
   }
+
+  if (loading) return (
+    <div style={{ textAlign:'center', padding:'5rem', fontFamily:'Nunito,sans-serif', color:'#999' }}>
+      <div style={{ fontSize:'3rem', marginBottom:'1rem' }}>🍲</div>
+      <div style={{ fontWeight:800 }}>Loading menu...</div>
+    </div>
+  )
 
   return (
     <>
@@ -55,8 +62,6 @@ const Menu = () => {
         .menu-sec-sub {
           color: #999; font-size: 0.9rem; font-weight: 600; margin-bottom: 2rem;
         }
-
-        /* Category tabs */
         .cat-tabs {
           display: flex; gap: 0.55rem;
           flex-wrap: wrap; margin-bottom: 2rem;
@@ -70,8 +75,6 @@ const Menu = () => {
         }
         .cat-tab:hover { border-color: #E8441A; color: #E8441A; }
         .cat-tab.active { background: #E8441A; color: white; border-color: #E8441A; }
-
-        /* Menu grid */
         .menu-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -108,11 +111,6 @@ const Menu = () => {
           display: flex; align-items: center; gap: 0.5rem;
           flex-wrap: wrap; margin-bottom: 0.85rem;
         }
-        .badge-pill {
-          display: inline-block; background: rgba(232,68,26,0.1); color: #E8441A;
-          font-size: 0.68rem; font-weight: 900; padding: 0.2rem 0.65rem;
-          border-radius: 50px;
-        }
         .veg-pill {
           background: rgba(45,158,95,0.1); color: #2D9E5F;
           font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.6rem;
@@ -127,6 +125,11 @@ const Menu = () => {
         }
         .add-to-cart-btn:hover { background: #c93510; }
         .add-to-cart-btn.added { background: #2D9E5F; }
+
+        .empty-menu {
+          text-align: center; padding: 4rem 2rem; color: #999;
+        }
+        .empty-menu-icon { font-size: 3rem; margin-bottom: 1rem; }
 
         @media (max-width: 768px) {
           .menu-page { padding: 2rem 1.5rem; }
@@ -152,31 +155,59 @@ const Menu = () => {
         </div>
 
         {/* Menu Grid */}
-        <div className="menu-grid">
-          {filtered.map(item => (
-            <div key={item.id} className="menu-card">
-              <div className="menu-card-img">{item.emoji}</div>
-              <div className="menu-card-body">
-                <div className="menu-card-top">
-                  <span className="menu-card-name">{item.name}</span>
-                  <span className="menu-card-price">KSh {item.price}</span>
-                </div>
-                <p className="menu-card-desc">{item.desc}</p>
-                <div className="menu-card-meta">
-                  <span className="badge-pill">{item.badge}</span>
-                  {item.veg && <span className="veg-pill">🥬 Veg</span>}
-                  {item.spice > 0 && <span className="spice-tag">{'🌶️'.repeat(item.spice)}</span>}
-                </div>
-                <button
-                  className={`add-to-cart-btn ${added[item.id] ? 'added' : ''}`}
-                  onClick={() => handleAdd(item)}
+        {filtered.length === 0 ? (
+          <div className="empty-menu">
+            <div className="empty-menu-icon">🍽️</div>
+            <div style={{ fontWeight: 800, fontSize: '1rem' }}>No items in this category yet!</div>
+          </div>
+        ) : (
+          <div className="menu-grid">
+            {filtered.map(item => (
+              <div key={item.id} className="menu-card">
+
+                {/* Image or emoji fallback */}
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    style={{ width:'100%', height:'170px', objectFit:'cover' }}
+                    onError={e => {
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="menu-card-img"
+                  style={{ display: item.image_url ? 'none' : 'flex' }}
                 >
-                  {added[item.id] ? '✓ Added!' : 'Add to Cart 🛒'}
-                </button>
+                  🍽️
+                </div>
+
+                <div className="menu-card-body">
+                  <div className="menu-card-top">
+                    <span className="menu-card-name">{item.name}</span>
+                    <span className="menu-card-price">KSh {item.price}</span>
+                  </div>
+                  <p className="menu-card-desc">{item.description}</p>
+                  <div className="menu-card-meta">
+                    {item.is_vegetarian && <span className="veg-pill">🥬 Veg</span>}
+                    {item.spice_level > 0 && (
+                      <span className="spice-tag">{'🌶️'.repeat(item.spice_level)}</span>
+                    )}
+                  </div>
+                  <button
+                    className={`add-to-cart-btn ${added[item.id] ? 'added' : ''}`}
+                    onClick={() => handleAdd(item)}
+                  >
+                    {added[item.id] ? '✓ Added!' : 'Add to Cart 🛒'}
+                  </button>
+                </div>
+
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )

@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom'
-
-// Placeholder cart items — we'll wire to CartContext later
-const SAMPLE_CART = [
-  { id:1, name:'Nyama Choma',    price:650, emoji:'🥩', quantity:1 },
-  { id:2, name:'Smokie Pasua',   price:80,  emoji:'🌭', quantity:2 },
-  { id:3, name:'Mandazi (4pcs)', price:60,  emoji:'🍩', quantity:1 },
-]
+import { useCart } from '../context/CartContext'
 
 const Cart = () => {
-  const cart  = SAMPLE_CART
-  const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0)
+  const { cart, removeFromCart, updateQty, total } = useCart()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigate('/login')
+    } else {
+      navigate('/checkout')
+    }
+  }
 
   return (
     <>
@@ -31,16 +34,12 @@ const Cart = () => {
           font-size: 2rem; font-weight: 700; color: #1C1C1C;
           margin-bottom: 2rem;
         }
-
-        /* Layout — items left, summary right */
         .cart-layout {
           display: grid;
           grid-template-columns: 1fr 360px;
           gap: 2rem;
           align-items: start;
         }
-
-        /* Cart Item */
         .cart-item {
           background: white; border-radius: 18px;
           padding: 1.2rem 1.5rem;
@@ -72,15 +71,12 @@ const Cart = () => {
           transition: color 0.2s;
         }
         .remove-btn:hover { color: #E8441A; }
-
-        /* Order Summary */
         .summary-card {
           background: white; border-radius: 20px;
           padding: 1.8rem;
           box-shadow: 0 4px 24px rgba(0,0,0,0.07);
           border: 1.5px solid #f5ece0;
-          position: sticky;
-          top: 90px;
+          position: sticky; top: 90px;
         }
         .summary-title {
           font-family: 'Playfair Display', serif;
@@ -93,8 +89,7 @@ const Cart = () => {
           font-size: 0.9rem; font-weight: 700;
         }
         .summary-divider {
-          border: none; border-top: 2px dashed #f0e8e0;
-          margin: 1rem 0;
+          border: none; border-top: 2px dashed #f0e8e0; margin: 1rem 0;
         }
         .summary-total {
           display: flex; justify-content: space-between;
@@ -117,8 +112,6 @@ const Cart = () => {
           text-decoration: none;
         }
         .continue-link:hover { color: #E8441A; }
-
-        /* Mpesa note */
         .mpesa-note {
           display: flex; align-items: center; gap: 0.5rem;
           background: rgba(232,68,26,0.05);
@@ -127,11 +120,7 @@ const Cart = () => {
           margin-top: 1rem;
           font-size: 0.8rem; font-weight: 700; color: #999;
         }
-
-        /* Empty cart */
-        .cart-empty {
-          text-align: center; padding: 5rem 2rem;
-        }
+        .cart-empty { text-align: center; padding: 5rem 2rem; }
         .cart-empty-emoji { font-size: 5rem; margin-bottom: 1rem; }
         .cart-empty-title {
           font-family: 'Playfair Display', serif;
@@ -161,7 +150,6 @@ const Cart = () => {
         <div className="cart-sec-title">Your Cart</div>
 
         {cart.length === 0 ? (
-          /* ── Empty State ── */
           <div className="cart-empty">
             <div className="cart-empty-emoji">🛒</div>
             <div className="cart-empty-title">Your cart is empty</div>
@@ -181,12 +169,21 @@ const Cart = () => {
                     <div className="cart-unit">KSh {item.price} each</div>
                   </div>
                   <div className="qty-row">
-                    <button className="qty-btn">−</button>
+                    <button
+                      className="qty-btn"
+                      onClick={() => updateQty(item.id, -1)}
+                    >−</button>
                     <span className="qty-num">{item.quantity}</span>
-                    <button className="qty-btn">+</button>
+                    <button
+                      className="qty-btn"
+                      onClick={() => updateQty(item.id, +1)}
+                    >+</button>
                   </div>
                   <div className="cart-total">KSh {item.price * item.quantity}</div>
-                  <button className="remove-btn">✕</button>
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeFromCart(item.id)}
+                  >✕</button>
                 </div>
               ))}
             </div>
