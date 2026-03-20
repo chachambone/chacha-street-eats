@@ -8,27 +8,24 @@ const STEPS = ['Delivery', 'Payment', 'Confirm']
 
 const Checkout = () => {
   const { cart, total, clearCart } = useCart()
-  const { user } = useAuth()
+  const { user }  = useAuth()
   const navigate  = useNavigate()
 
-  const [step,    setStep]    = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
-  const [orderID, setOrderID] = useState(null)
-
-  const [delivery, setDelivery] = useState({
+  const [step,       setStep]       = useState(0)
+  const [loading,    setLoading]    = useState(false)
+  const [error,      setError]      = useState('')
+  const [orderID,    setOrderID]    = useState(null)
+  const [payment,    setPayment]    = useState('mpesa')
+  const [mpesaPhone, setMpesaPhone] = useState('')
+  const [delivery,   setDelivery]   = useState({
     address: '',
-    phone:   user?.phone || '',
+    phone:   '',
     notes:   '',
   })
-
-  const [payment, setPayment] = useState('mpesa')
-  const [mpesaPhone, setMpesaPhone] = useState(user?.phone || '')
 
   const handleDeliveryChange = e =>
     setDelivery({ ...delivery, [e.target.name]: e.target.value })
 
-  // ── STEP 1: Delivery ──
   const submitDelivery = (e) => {
     e.preventDefault()
     if (!delivery.address || !delivery.phone) {
@@ -38,7 +35,6 @@ const Checkout = () => {
     setStep(1)
   }
 
-  // ── STEP 2: Payment ──
   const submitPayment = (e) => {
     e.preventDefault()
     if (payment === 'mpesa' && !mpesaPhone) {
@@ -48,7 +44,6 @@ const Checkout = () => {
     setStep(2)
   }
 
-  // ── STEP 3: Place Order ──
   const placeOrder = async () => {
     setLoading(true)
     setError('')
@@ -79,15 +74,18 @@ const Checkout = () => {
     }
   }
 
-  // Redirect if cart empty and no order
   if (cart.length === 0 && step !== 3) {
     return (
       <div style={{ textAlign:'center', padding:'5rem 2rem', fontFamily:'Nunito,sans-serif' }}>
         <div style={{ fontSize:'4rem', marginBottom:'1rem' }}>🛒</div>
-        <div style={{ fontFamily:'Playfair Display,serif', fontSize:'1.8rem', color:'#ccc', marginBottom:'0.5rem' }}>
+        <div style={{ fontFamily:'Playfair Display,serif', fontSize:'1.8rem', color:'#ccc', marginBottom:'1.5rem' }}>
           Your cart is empty!
         </div>
-        <Link to="/menu" style={{ background:'#E8441A', color:'white', padding:'0.85rem 2rem', borderRadius:'50px', textDecoration:'none', fontWeight:800, fontFamily:'Nunito,sans-serif' }}>
+        <Link to="/menu" style={{
+          background:'#E8441A', color:'white', padding:'0.85rem 2rem',
+          borderRadius:'50px', textDecoration:'none', fontWeight:800,
+          fontFamily:'Nunito,sans-serif', display:'inline-block'
+        }}>
           Browse Menu 🔥
         </Link>
       </div>
@@ -100,10 +98,8 @@ const Checkout = () => {
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Playfair+Display:wght@700&display=swap');
 
         .checkout-page {
-          background: #FFF8F0;
-          min-height: 100vh;
-          padding: 3rem;
-          font-family: 'Nunito', sans-serif;
+          background: #FFF8F0; min-height: 100vh;
+          padding: 3rem; font-family: 'Nunito', sans-serif;
         }
         .checkout-sec-label {
           font-size: 0.75rem; font-weight: 900; color: #E8441A;
@@ -111,15 +107,13 @@ const Checkout = () => {
         }
         .checkout-sec-title {
           font-family: 'Playfair Display', serif;
-          font-size: 2rem; font-weight: 700; color: #1C1C1C;
-          margin-bottom: 2rem;
+          font-size: 2rem; font-weight: 700; color: #1C1C1C; margin-bottom: 2rem;
         }
 
-        /* ── STEPPER ── */
+        /* STEPPER */
         .stepper {
           display: flex; align-items: center;
-          gap: 0; margin-bottom: 3rem;
-          max-width: 500px;
+          margin-bottom: 3rem; max-width: 500px;
         }
         .step-item {
           display: flex; flex-direction: column;
@@ -129,20 +123,17 @@ const Checkout = () => {
           width: 40px; height: 40px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           font-weight: 900; font-size: 0.9rem;
-          border: 2px solid #e8dfd4;
-          background: white; color: #999;
+          border: 2px solid #e8dfd4; background: white; color: #999;
           transition: all 0.3s;
         }
         .step-circle.active {
-          background: #E8441A; border-color: #E8441A;
-          color: white; box-shadow: 0 4px 12px rgba(232,68,26,0.3);
+          background: #E8441A; border-color: #E8441A; color: white;
+          box-shadow: 0 4px 12px rgba(232,68,26,0.3);
         }
-        .step-circle.done {
-          background: #2D9E5F; border-color: #2D9E5F; color: white;
-        }
+        .step-circle.done { background: #2D9E5F; border-color: #2D9E5F; color: white; }
         .step-label {
-          font-size: 0.72rem; font-weight: 800;
-          color: #999; text-transform: uppercase; letter-spacing: 1px;
+          font-size: 0.72rem; font-weight: 800; color: #999;
+          text-transform: uppercase; letter-spacing: 1px;
         }
         .step-label.active { color: #E8441A; }
         .step-label.done   { color: #2D9E5F; }
@@ -152,27 +143,21 @@ const Checkout = () => {
         }
         .step-line.done { background: #2D9E5F; }
 
-        /* ── LAYOUT ── */
+        /* LAYOUT */
         .checkout-layout {
-          display: grid;
-          grid-template-columns: 1fr 340px;
-          gap: 2rem;
-          align-items: start;
-          max-width: 1000px;
+          display: grid; grid-template-columns: 1fr 340px;
+          gap: 2rem; align-items: start; max-width: 1000px;
         }
 
-        /* ── FORM CARD ── */
+        /* FORM CARD */
         .checkout-card {
-          background: white; border-radius: 24px;
-          padding: 2rem;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-          border: 1.5px solid #f5ece0;
+          background: white; border-radius: 24px; padding: 2rem;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.07); border: 1.5px solid #f5ece0;
         }
         .checkout-card-title {
           font-family: 'Playfair Display', serif;
-          font-size: 1.3rem; font-weight: 700;
-          color: #1C1C1C; margin-bottom: 1.5rem;
-          display: flex; align-items: center; gap: 0.5rem;
+          font-size: 1.3rem; font-weight: 700; color: #1C1C1C;
+          margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;
         }
         .field-label {
           display: block; font-size: 0.75rem; font-weight: 900;
@@ -183,20 +168,15 @@ const Checkout = () => {
           width: 100%; padding: 0.8rem 1rem;
           border: 1.5px solid #e8dfd4; border-radius: 12px;
           background: #FFF8F0; color: #1C1C1C;
-          font-family: 'Nunito', sans-serif;
-          font-size: 0.93rem; font-weight: 700;
-          transition: border-color 0.2s; outline: none;
-          margin-bottom: 1rem;
+          font-family: 'Nunito', sans-serif; font-size: 0.93rem; font-weight: 700;
+          transition: border-color 0.2s; outline: none; margin-bottom: 1rem;
         }
         .field-input:focus { border-color: #E8441A; background: white; }
         .field-input::placeholder { color: #bbb; font-weight: 500; }
         textarea.field-input { resize: vertical; min-height: 80px; }
 
-        /* ── PAYMENT OPTIONS ── */
-        .payment-options {
-          display: flex; flex-direction: column; gap: 0.8rem;
-          margin-bottom: 1.5rem;
-        }
+        /* PAYMENT OPTIONS */
+        .payment-options { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem; }
         .payment-option {
           display: flex; align-items: center; gap: 1rem;
           background: #FFF8F0; border: 1.5px solid #e8dfd4;
@@ -204,111 +184,91 @@ const Checkout = () => {
           cursor: pointer; transition: all 0.2s;
         }
         .payment-option:hover { border-color: #E8441A; }
-        .payment-option.selected {
-          border-color: #E8441A;
-          background: rgba(232,68,26,0.05);
-        }
+        .payment-option.selected { border-color: #E8441A; background: rgba(232,68,26,0.05); }
         .payment-radio {
           width: 20px; height: 20px; border-radius: 50%;
-          border: 2px solid #e8dfd4;
+          border: 2px solid #e8dfd4; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; transition: all 0.2s;
+          transition: all 0.2s;
         }
-        .payment-radio.selected {
-          border-color: #E8441A;
-          background: #E8441A;
-        }
+        .payment-radio.selected { border-color: #E8441A; background: #E8441A; }
         .payment-radio.selected::after {
           content: ''; width: 8px; height: 8px;
           border-radius: 50%; background: white;
+          display: block;
         }
         .payment-icon  { font-size: 1.5rem; }
         .payment-label { font-weight: 800; font-size: 0.95rem; color: #1C1C1C; }
         .payment-sub   { font-size: 0.78rem; color: #999; font-weight: 600; }
 
-        /* ── ORDER REVIEW ── */
+        /* REVIEW */
         .review-item {
-          display: flex; justify-content: space-between;
-          align-items: center; padding: 0.7rem 0;
-          border-bottom: 1px solid #f5ece0;
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 0.7rem 0; border-bottom: 1px solid #f5ece0;
           font-size: 0.88rem;
         }
         .review-item:last-child { border-bottom: none; }
-        .review-item-name { font-weight: 700; color: #1C1C1C; }
-        .review-item-qty  { color: #999; font-size: 0.8rem; }
+        .review-item-name  { font-weight: 700; color: #1C1C1C; }
+        .review-item-qty   { color: #999; font-size: 0.8rem; }
         .review-item-price { font-weight: 900; color: #E8441A; }
         .review-info {
-          background: #FFF8F0; border-radius: 12px;
-          padding: 1rem; margin-top: 1rem;
-          font-size: 0.85rem; color: #666; font-weight: 600;
-          line-height: 1.7;
+          background: #FFF8F0; border-radius: 12px; padding: 1rem;
+          margin-top: 1rem; font-size: 0.85rem; color: #666;
+          font-weight: 600; line-height: 1.7;
         }
         .review-info strong { color: #1C1C1C; }
 
-        /* ── BUTTONS ── */
+        /* BUTTONS */
         .submit-btn {
           width: 100%; padding: 0.95rem; border-radius: 14px; border: none;
           background: #E8441A; color: white;
-          font-family: 'Nunito', sans-serif;
-          font-size: 1rem; font-weight: 800;
+          font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800;
           cursor: pointer; transition: all 0.2s;
-          box-shadow: 0 6px 20px rgba(232,68,26,0.3);
-          margin-top: 0.5rem;
+          box-shadow: 0 6px 20px rgba(232,68,26,0.3); margin-top: 0.5rem;
         }
         .submit-btn:hover { background: #c93510; transform: translateY(-1px); }
         .submit-btn:disabled { background: #f0a898; cursor: not-allowed; transform: none; }
         .back-btn {
-          background: transparent; border: 1.5px solid #e8dfd4;
-          color: #999; padding: 0.8rem 1.5rem;
-          border-radius: 14px; font-family: 'Nunito', sans-serif;
-          font-size: 0.9rem; font-weight: 700;
-          cursor: pointer; transition: all 0.2s; margin-top: 0.8rem;
-          width: 100%;
+          background: transparent; border: 1.5px solid #e8dfd4; color: #999;
+          padding: 0.8rem 1.5rem; border-radius: 14px;
+          font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700;
+          cursor: pointer; transition: all 0.2s; margin-top: 0.8rem; width: 100%;
         }
         .back-btn:hover { border-color: #E8441A; color: #E8441A; }
         .err-msg {
-          background: #fff5f5; border: 1px solid #fecaca;
-          color: #e53e3e; padding: 0.7rem 1rem;
-          border-radius: 10px; font-size: 0.83rem;
+          background: #fff5f5; border: 1px solid #fecaca; color: #e53e3e;
+          padding: 0.7rem 1rem; border-radius: 10px; font-size: 0.83rem;
           font-weight: 800; margin-bottom: 1rem;
         }
+        .mpesa-note {
+          display: flex; align-items: center; gap: 0.5rem;
+          background: rgba(232,68,26,0.05); border: 1px solid rgba(232,68,26,0.15);
+          border-radius: 10px; padding: 0.7rem 1rem; margin-top: 0.8rem;
+          font-size: 0.78rem; font-weight: 700; color: #999;
+        }
 
-        /* ── ORDER SUMMARY CARD ── */
+        /* SUMMARY */
         .summary-card {
-          background: white; border-radius: 24px;
-          padding: 1.8rem;
+          background: white; border-radius: 24px; padding: 1.8rem;
           box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-          border: 1.5px solid #f5ece0;
-          position: sticky; top: 90px;
+          border: 1.5px solid #f5ece0; position: sticky; top: 90px;
         }
         .summary-title {
           font-family: 'Playfair Display', serif;
-          font-size: 1.2rem; font-weight: 700;
-          color: #1C1C1C; margin-bottom: 1.2rem;
+          font-size: 1.2rem; font-weight: 700; color: #1C1C1C; margin-bottom: 1.2rem;
         }
         .summary-row {
-          display: flex; justify-content: space-between;
-          margin-bottom: 0.7rem; color: #999;
-          font-size: 0.88rem; font-weight: 700;
+          display: flex; justify-content: space-between; margin-bottom: 0.7rem;
+          color: #999; font-size: 0.88rem; font-weight: 700;
         }
-        .summary-divider {
-          border: none; border-top: 2px dashed #f0e8e0; margin: 1rem 0;
-        }
+        .summary-divider { border: none; border-top: 2px dashed #f0e8e0; margin: 1rem 0; }
         .summary-total {
           display: flex; justify-content: space-between;
           font-size: 1.1rem; font-weight: 900; color: #1C1C1C;
         }
         .summary-total span:last-child { color: #E8441A; }
-        .mpesa-note {
-          display: flex; align-items: center; gap: 0.5rem;
-          background: rgba(232,68,26,0.05);
-          border: 1px solid rgba(232,68,26,0.15);
-          border-radius: 10px; padding: 0.7rem 1rem;
-          margin-top: 1rem;
-          font-size: 0.78rem; font-weight: 700; color: #999;
-        }
 
-        /* ── SUCCESS ── */
+        /* SUCCESS */
         .success-wrap {
           text-align: center; padding: 3rem 2rem;
           max-width: 500px; margin: 0 auto;
@@ -316,42 +276,34 @@ const Checkout = () => {
         .success-emoji { font-size: 5rem; margin-bottom: 1rem; }
         .success-title {
           font-family: 'Playfair Display', serif;
-          font-size: 2.2rem; color: #2D9E5F;
-          font-weight: 700; margin-bottom: 0.5rem;
+          font-size: 2.2rem; color: #2D9E5F; font-weight: 700; margin-bottom: 0.5rem;
         }
         .success-sub {
-          color: #999; font-size: 0.95rem;
-          font-weight: 600; line-height: 1.7; margin-bottom: 0.5rem;
+          color: #999; font-size: 0.95rem; font-weight: 600;
+          line-height: 1.7; margin-bottom: 0.5rem;
         }
         .success-order-id {
-          background: rgba(45,158,95,0.1);
-          border: 1px solid rgba(45,158,95,0.3);
-          color: #2D9E5F; padding: 0.5rem 1.2rem;
-          border-radius: 50px; font-size: 0.85rem;
-          font-weight: 800; display: inline-block;
-          margin: 1rem 0 2rem;
+          background: rgba(45,158,95,0.1); border: 1px solid rgba(45,158,95,0.3);
+          color: #2D9E5F; padding: 0.5rem 1.2rem; border-radius: 50px;
+          font-size: 0.85rem; font-weight: 800;
+          display: inline-block; margin: 1rem 0 2rem;
         }
-        .success-actions {
-          display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
-        }
+        .success-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
         .btn-red {
           background: #E8441A; color: white; border: none;
           padding: 0.85rem 2rem; border-radius: 50px;
           font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 800;
           cursor: pointer; transition: all 0.2s;
           box-shadow: 0 6px 20px rgba(232,68,26,0.35);
-          text-decoration: none; display: inline-flex;
-          align-items: center; gap: 0.5rem;
+          text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
         }
         .btn-red:hover { background: #c93510; transform: translateY(-2px); }
         .btn-outline {
-          background: transparent; color: #1C1C1C;
-          border: 1.5px solid #ddd;
+          background: transparent; color: #1C1C1C; border: 1.5px solid #ddd;
           padding: 0.85rem 2rem; border-radius: 50px;
           font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 700;
           cursor: pointer; transition: all 0.2s;
-          text-decoration: none; display: inline-flex;
-          align-items: center; gap: 0.5rem;
+          text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
         }
         .btn-outline:hover { border-color: #E8441A; color: #E8441A; }
 
@@ -366,35 +318,26 @@ const Checkout = () => {
         <div className="checkout-sec-label">🛍️ Checkout</div>
         <div className="checkout-sec-title">Complete Your Order</div>
 
-        {/* ── SUCCESS STATE ── */}
+        {/* SUCCESS */}
         {step === 3 ? (
           <div className="success-wrap">
             <div className="success-emoji">🎉</div>
             <div className="success-title">Order Placed!</div>
-            <p className="success-sub">
-              Your Chacha Street Eats order has been confirmed!
-              We're preparing your food right now. 🔥
-            </p>
-            <p className="success-sub">
-              Estimated delivery: <strong>25–35 minutes 🛵</strong>
-            </p>
-            {orderID && (
-              <div className="success-order-id">
-                Order #{orderID}
-              </div>
-            )}
+            <p className="success-sub">Your Chacha Street Eats order is confirmed! We're preparing your food right now. 🔥</p>
+            <p className="success-sub">Estimated delivery: <strong>25–35 minutes 🛵</strong></p>
+            {orderID && <div className="success-order-id">Order #{orderID}</div>}
             <div className="success-actions">
-              <Link to="/menu"  className="btn-red">Order More 🍲</Link>
-              <Link to="/"      className="btn-outline">Go Home</Link>
+              <Link to="/menu" className="btn-red">Order More 🍲</Link>
+              <Link to="/"     className="btn-outline">Go Home</Link>
             </div>
           </div>
         ) : (
           <>
-            {/* ── STEPPER ── */}
+            {/* STEPPER */}
             <div className="stepper">
               {STEPS.map((s, i) => (
-                <>
-                  <div key={s} className="step-item">
+                <div key={s} style={{ display:'flex', alignItems:'center', flex: i < STEPS.length - 1 ? '1' : 'none' }}>
+                  <div className="step-item">
                     <div className={`step-circle ${i < step ? 'done' : i === step ? 'active' : ''}`}>
                       {i < step ? '✓' : i + 1}
                     </div>
@@ -405,13 +348,13 @@ const Checkout = () => {
                   {i < STEPS.length - 1 && (
                     <div className={`step-line ${i < step ? 'done' : ''}`} />
                   )}
-                </>
+                </div>
               ))}
             </div>
 
             <div className="checkout-layout">
 
-              {/* ── LEFT: Form ── */}
+              {/* LEFT: Form */}
               <div>
                 {error && <div className="err-msg">⚠️ {error}</div>}
 
@@ -422,27 +365,21 @@ const Checkout = () => {
                     <form onSubmit={submitDelivery}>
                       <label className="field-label">Delivery Address *</label>
                       <input
-                        className="field-input"
-                        name="address"
+                        className="field-input" name="address"
                         placeholder="e.g. House 4, Mwihoko, Kahawa Sukari"
-                        value={delivery.address}
-                        onChange={handleDeliveryChange}
+                        value={delivery.address} onChange={handleDeliveryChange}
                       />
                       <label className="field-label">Phone Number *</label>
                       <input
-                        className="field-input"
-                        name="phone"
+                        className="field-input" name="phone"
                         placeholder="07XX XXX XXX"
-                        value={delivery.phone}
-                        onChange={handleDeliveryChange}
+                        value={delivery.phone} onChange={handleDeliveryChange}
                       />
                       <label className="field-label">Delivery Notes (optional)</label>
                       <textarea
-                        className="field-input"
-                        name="notes"
+                        className="field-input" name="notes"
                         placeholder="e.g. Blue gate, near the shop..."
-                        value={delivery.notes}
-                        onChange={handleDeliveryChange}
+                        value={delivery.notes} onChange={handleDeliveryChange}
                       />
                       <button type="submit" className="submit-btn">
                         Continue to Payment →
@@ -458,9 +395,9 @@ const Checkout = () => {
                     <form onSubmit={submitPayment}>
                       <div className="payment-options">
                         {[
-                          { id:'mpesa', icon:'📱', label:'M-Pesa',           sub:'Pay via mobile money — instant & secure'     },
-                          { id:'cash',  icon:'💵', label:'Cash on Delivery',  sub:'Pay when your order arrives at your door'    },
-                          { id:'card',  icon:'💳', label:'Card Payment',      sub:'Visa / Mastercard — paid on delivery'        },
+                          { id:'mpesa', icon:'📱', label:'M-Pesa',          sub:'Pay via mobile money — instant & secure'  },
+                          { id:'cash',  icon:'💵', label:'Cash on Delivery', sub:'Pay when your order arrives at your door' },
+                          { id:'card',  icon:'💳', label:'Card Payment',     sub:'Visa / Mastercard — paid on delivery'     },
                         ].map(opt => (
                           <div
                             key={opt.id}
@@ -477,7 +414,6 @@ const Checkout = () => {
                         ))}
                       </div>
 
-                      {/* M-Pesa phone input */}
                       {payment === 'mpesa' && (
                         <>
                           <label className="field-label">M-Pesa Phone Number *</label>
@@ -507,8 +443,6 @@ const Checkout = () => {
                 {step === 2 && (
                   <div className="checkout-card">
                     <div className="checkout-card-title">✅ Review & Confirm</div>
-
-                    {/* Order items */}
                     {cart.map(item => (
                       <div key={item.id} className="review-item">
                         <div>
@@ -518,15 +452,16 @@ const Checkout = () => {
                         <div className="review-item-price">KSh {item.price * item.quantity}</div>
                       </div>
                     ))}
-
-                    {/* Delivery & payment info */}
                     <div className="review-info">
                       <strong>📍 Delivering to:</strong> {delivery.address}<br/>
                       <strong>📞 Phone:</strong> {delivery.phone}<br/>
                       {delivery.notes && <><strong>📝 Notes:</strong> {delivery.notes}<br/></>}
-                      <strong>💳 Payment:</strong> {payment === 'mpesa' ? `M-Pesa (${mpesaPhone})` : payment === 'cash' ? 'Cash on Delivery' : 'Card on Delivery'}
+                      <strong>💳 Payment:</strong> {
+                        payment === 'mpesa' ? `M-Pesa (${mpesaPhone})`
+                        : payment === 'cash' ? 'Cash on Delivery'
+                        : 'Card on Delivery'
+                      }
                     </div>
-
                     <button
                       className="submit-btn"
                       style={{ marginTop:'1.5rem' }}
@@ -542,7 +477,7 @@ const Checkout = () => {
                 )}
               </div>
 
-              {/* ── RIGHT: Order Summary ── */}
+              {/* RIGHT: Summary */}
               <div className="summary-card">
                 <div className="summary-title">Order Summary</div>
                 {cart.map(item => (

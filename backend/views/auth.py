@@ -130,7 +130,7 @@ def login():
         return jsonify({"error": "Internal server error"}), 500
 
 @auth_bp.route('/logout', methods=['DELETE'])
-@jwt_required()
+@jwt_required(verify_type=False)
 def logout():
     try:
         jti = get_jwt()['jti']
