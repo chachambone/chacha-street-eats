@@ -39,7 +39,7 @@ app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
 # ======================
 db.init_app(app)
 migrate = Migrate(app, db)
-CORS(app)
+CORS(app, origins=["https://chacha-street-eats.vercel.app/"])
 
 jwt    = JWTManager(app)
 bcrypt = Bcrypt(app)
