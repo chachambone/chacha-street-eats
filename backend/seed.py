@@ -1,18 +1,18 @@
-# seed.py - Uses the REAL db from app.py (no new SQLAlchemy instance!)
+# seed.py
 
-from app import app, db                        # ← this is the key line
-from models import Category, MenuItem          # your real models
+from app import app, db
+from models import Category, MenuItem
 
 with app.app_context():
-    # Optional: reset DB for clean seed (uncomment if you want fresh start)
-    # db.drop_all()
-    db.create_all()  # Creates tables if they don't exist
+    db.create_all()
 
-    # Seed categories (skip duplicates)
+    # ==========================
+    # Seed Categories
+    # ==========================
     categories_data = [
-        {"name": "snacks", "label": "Snacks & Starters", "icon": "🥟"},
-        {"name": "street_favorites", "label": "Street Favorites", "icon": "🌭"},
-        {"name": "mains", "label": "Mains", "icon": "🍖"},
+        {"name": "snacks",           "label": "Snacks & Starters", "icon": "🥟"},
+        {"name": "street_favorites", "label": "Street Favorites",  "icon": "🌭"},
+        {"name": "mains",            "label": "Mains",             "icon": "🍖"},
     ]
 
     cat_map = {}
@@ -26,76 +26,81 @@ with app.app_context():
         db.session.flush()
         cat_map[data["name"]] = cat.id
 
-    # Seed menu items - Kaluhi’s Kitchen images (tested & loading)
+    # ==========================
+    # Seed Menu Items
+    # Images from Unsplash (free, stable, no hotlinking restrictions) ✅
+    # ==========================
     menu_data = [
         {
-            "name": "Nyama Choma (Goat)",
-            "price": 1000,
-            "image_url": "https://i0.wp.com/kaluhiskitchen.com/wp-content/uploads/2015/09/DSC_0096.jpg",
-            "description": "Slow-grilled goat with ugali & sukuma wiki",
-            "in_stock": True,
-            "spice_level": 1,
+            "name":          "Nyama Choma (Goat)",
+            "price":         1000,
+            "image_url":     "https://images.unsplash.com/photo-1544025162-d76694265947?w=640&q=80",
+            "description":   "Slow-grilled goat with ugali & sukuma wiki",
+            "in_stock":      True,
+            "spice_level":   1,
             "is_vegetarian": False,
-            "category_id": cat_map["mains"]
+            "category_id":   cat_map["mains"],
         },
         {
-            "name": "Beef Samosas",
-            "price": 100,
-            "image_url": "https://www.jayne-rain.com/wp-content/uploads/2020/04/Kenyan-Beef-Samosa-Square.jpg",
-            "description": "Crispy spiced beef triangles",
-            "in_stock": True,
-            "spice_level": 2,
+            "name":          "Beef Samosas",
+            "price":         100,
+            "image_url":     "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=640&q=80",
+            "description":   "Crispy spiced beef triangles",
+            "in_stock":      True,
+            "spice_level":   2,
             "is_vegetarian": False,
-            "category_id": cat_map["snacks"]
+            "category_id":   cat_map["snacks"],
         },
         {
-            "name": "Smokie Pasua",
-            "price": 150,
-            "image_url": "https://nairobikitchen.com/wp-content/uploads/2018/10/IMG_20181005_192242.jpg",
-            "description": "Smokie stuffed with kachumbari – street royalty",
-            "in_stock": True,
-            "spice_level": 2,
+            "name":          "Smokie Pasua",
+            "price":         150,
+            "image_url":     "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=640&q=80",
+            "description":   "Smokie stuffed with kachumbari – street royalty",
+            "in_stock":      True,
+            "spice_level":   2,
             "is_vegetarian": False,
-            "category_id": cat_map["street_favorites"]
+            "category_id":   cat_map["street_favorites"],
         },
         {
-            "name": "Bhajia",
-            "price": 150,
-            "image_url": "https://www.chefspencil.com/wp-content/uploads/Kenyan-Bhajia-1.jpg",
-            "description": "Crispy potato fritters, coastal style with chili dip",
-            "in_stock": True,
-            "spice_level": 2,
+            "name":          "Bhajia",
+            "price":         150,
+            "image_url":     "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=640&q=80",
+            "description":   "Crispy potato fritters, coastal style with chili dip",
+            "in_stock":      True,
+            "spice_level":   2,
             "is_vegetarian": True,
-            "category_id": cat_map["snacks"]
+            "category_id":   cat_map["snacks"],
         },
         {
-            "name": "Mandazi",
-            "price": 50,
-            "image_url": "https://www.africanbites.com/wp-content/uploads/2019/03/IMG_0399.jpg",
-            "description": "Fluffy coconut-cardamom dough triangles",
-            "in_stock": True,
-            "spice_level": 0,
+            "name":          "Mandazi",
+            "price":         50,
+            "image_url":     "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=640&q=80",
+            "description":   "Fluffy coconut-cardamom dough triangles",
+            "in_stock":      True,
+            "spice_level":   0,
             "is_vegetarian": True,
-            "category_id": cat_map["snacks"]
+            "category_id":   cat_map["snacks"],
         },
         {
-            "name": "Chips Mayai",
-            "price": 250,
-            "image_url": "https://nairobikitchen.com/wp-content/uploads/2019/02/IMG_20190222_185622.jpg",
-            "description": "Fries cooked into a fluffy omelette – pure comfort",
-            "in_stock": True,
-            "spice_level": 1,
+            "name":          "Chips Mayai",
+            "price":         250,
+            "image_url":     "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=640&q=80",
+            "description":   "Fries cooked into a fluffy omelette – pure comfort",
+            "in_stock":      True,
+            "spice_level":   1,
             "is_vegetarian": True,
-            "category_id": cat_map["street_favorites"]
+            "category_id":   cat_map["street_favorites"],
         },
     ]
 
     for data in menu_data:
         existing = MenuItem.query.filter_by(name=data["name"]).first()
         if existing:
+            # Always update image URL to fix any old broken ones in the DB
+            existing.image_url = data["image_url"]
             continue
         item = MenuItem(**data)
         db.session.add(item)
 
     db.session.commit()
-    print("Chacha Street Eats fully seeded – categories + menu with Kaluhi’s Kitchen photos! 🔥🇰🇪")
+    print("Chacha Street Eats seeded with fresh working images! 🔥🇰🇪")

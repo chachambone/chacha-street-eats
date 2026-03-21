@@ -1,28 +1,42 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from views.mailserver import send_manager_invite_email
 from models import db, User, Order
+from functools import wraps
 
 user_bp = Blueprint('user', __name__, url_prefix='/users')
 
-# Admin-only decorator (you already have roles_required in auth.py, but we can reuse or duplicate)
+
+# ======================
+# Admin-only decorator
+# ✅ FIX: Previously used identity.get('role') but identity is now a plain
+# string (user id). Role now lives in JWT claims — use get_jwt() instead.
+# ======================
 def admin_required(fn):
+    @wraps(fn)
     @jwt_required()
     def wrapper(*args, **kwargs):
-        identity = get_jwt_identity()
-        if identity.get('role') != 'admin':
+        claims = get_jwt()
+        if claims.get('role') != 'admin':
             return jsonify({"error": "Admin only"}), 403
         return fn(*args, **kwargs)
-    wrapper.__name__ = fn.__name__  # Preserve original function name
     return wrapper
 
+
+# ======================
+# GET /api/user/users  — list all users (admin only)
+# ======================
 @user_bp.route('', methods=['GET'])
 @admin_required
 def get_all_users():
     users = User.query.all()
     return jsonify({"users": [u.to_dict() for u in users]})
 
+
+# ======================
+# PATCH /api/user/users/<id>/block  — block or unblock a user (admin only)
+# ======================
 @user_bp.route('/<int:id>/block', methods=['PATCH'])
 @admin_required
 def toggle_block_user(id):
@@ -33,9 +47,13 @@ def toggle_block_user(id):
     status = "blocked" if user.blocked else "unblocked"
     return jsonify({
         "message": f"User {status} successfully",
-        "user": user.to_dict()
+        "user":    user.to_dict()
     }), 200
 
+
+# ======================
+# DELETE /api/user/users/<id>  — delete a user (admin only)
+# ======================
 @user_bp.route('/<int:id>', methods=['DELETE'])
 @admin_required
 def delete_user(id):
@@ -45,13 +63,18 @@ def delete_user(id):
 
     db.session.delete(user)
     db.session.commit()
-
     return jsonify({"message": f"User with ID {id} deleted successfully."}), 200
 
+
+# ======================
+# POST /api/user/create-manager  — create or promote a manager (admin only)
+# ✅ FIX: role was being set to 'manager' but ROLE_CHOICES uses 'order_manager'.
+# Unified to 'order_manager' throughout.
+# ======================
 @user_bp.route('/create-manager', methods=['POST'])
 @admin_required
 def create_manager():
-    data = request.get_json()
+    data  = request.get_json()
     email = data.get('email')
 
     if not email:
@@ -60,50 +83,60 @@ def create_manager():
     user = User.query.filter_by(email=email).first()
 
     if user:
-        if user.role == 'manager':
+        # ✅ FIX: was checking/setting 'manager', now correctly uses 'order_manager'
+        if user.role == 'order_manager':
             return jsonify({"error": "User is already a manager"}), 400
-        user.role = 'manager'
+        user.role = 'order_manager'
         db.session.commit()
         send_manager_invite_email(name=user.username, email=email, is_existing_user=True)
         return jsonify({
-            "message": f"User '{email}' role updated to manager.",
-            "user": user.to_dict()
+            "message": f"User '{email}' role updated to order_manager.",
+            "user":    user.to_dict()
         }), 200
 
-    # New manager
-    default_password = "manager@thebeauty"  # Change this in production!
-    hashed_password = generate_password_hash(default_password)
-    username = email.split('@')[0]
+    # New manager account
+    default_password = "manager@thebeauty"  # ⚠️ Change this in production!
+    hashed_password  = generate_password_hash(default_password)
+    username         = email.split('@')[0]
 
     new_user = User(
-        username=username,
-        email=email,
-        password_hash=hashed_password,
-        role='manager'
+        username      = username,
+        email         = email,
+        password_hash = hashed_password,
+        role          = 'order_manager'  # ✅ FIX: was 'manager'
     )
     db.session.add(new_user)
     db.session.commit()
 
-    send_manager_invite_email(name=username, email=email, is_existing_user=False, password=default_password)
+    send_manager_invite_email(
+        name             = username,
+        email            = email,
+        is_existing_user = False,
+        password         = default_password
+    )
 
     return jsonify({
-        "message": f"Manager account created for {email}",
+        "message":          f"Manager account created for {email}",
         "default_password": default_password,
-        "user": new_user.to_dict()
+        "user":             new_user.to_dict()
     }), 201
 
+
+# ======================
+# DELETE /api/user/delete  — user deletes their own account
+# ✅ FIX: identity is now a plain string, not a dict
+# ======================
 @user_bp.route('/delete', methods=['DELETE'])
 @jwt_required()
 def delete_account():
-    identity = get_jwt_identity()
-    user_id = identity.get("id")
+    # ✅ FIX: convert string identity to int
+    user_id = int(get_jwt_identity())
 
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
     try:
-        # Clean up orders (set user_id to NULL or delete them)
         Order.query.filter_by(user_id=user_id).update({"user_id": None})
         db.session.commit()
 
@@ -116,19 +149,24 @@ def delete_account():
         db.session.rollback()
         return jsonify({"error": f"Failed to delete account: {str(e)}"}), 500
 
+
+# ======================
+# PATCH /api/user/change-password  — user changes their own password
+# ✅ FIX: identity is now a plain string, not a dict
+# ======================
 @user_bp.route("/change-password", methods=["PATCH"])
 @jwt_required()
 def change_password():
-    identity = get_jwt_identity()
-    user_id = identity.get("id")
+    # ✅ FIX: convert string identity to int
+    user_id = int(get_jwt_identity())
 
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    data = request.get_json()
+    data             = request.get_json()
     current_password = data.get("current_password")
-    new_password = data.get("new_password")
+    new_password     = data.get("new_password")
 
     if not current_password or not new_password:
         return jsonify({"error": "Both current and new passwords are required"}), 400
