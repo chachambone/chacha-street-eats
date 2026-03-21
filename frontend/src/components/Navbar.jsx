@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import logo from '../assets/chacha-logo.png'
 
 const Navbar = () => {
   const location         = useLocation()
@@ -29,7 +30,6 @@ const Navbar = () => {
         .nav-logo {
           display: flex;
           align-items: center;
-          gap: 0.6rem;
           text-decoration: none;
         }
         .nav-logo-box {
@@ -164,12 +164,15 @@ const Navbar = () => {
       `}</style>
 
       <nav className="navbar">
-
-        {/* ── Logo ── */}
-        <Link to="/" className="nav-logo">
-          <div className="nav-logo-box">🔥</div>
-          <span className="nav-logo-text">Chacha Street Eats</span>
-        </Link>
+        
+        
+    <Link to="/" className="nav-logo">
+  <img
+    src={logo}
+    alt="Chacha Street Eats"
+    style={{ height: '55px', objectFit: 'contain' }}
+  />
+</Link>
 
         {/* ── Middle Links ── */}
         <div className="nav-links">

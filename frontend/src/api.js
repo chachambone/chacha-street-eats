@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+    baseURL: 'https://chacha-street-eats.onrender.com',
 })
 
 // Attach token to every request automatically

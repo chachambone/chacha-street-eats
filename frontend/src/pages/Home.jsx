@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const FEATURES = [
   { icon: '⭐', title: 'Quality Food',   desc: 'Only the freshest ingredients sourced daily from Nairobi markets.' },
   { icon: '🛵', title: 'Fast Delivery',  desc: 'Hot food at your door in 30 minutes or less, guaranteed.'         },
@@ -6,12 +8,54 @@ const FEATURES = [
 ]
 
 const BESTSELLERS = [
-  { id:1,  name:'Nyama Choma',    price:650,  emoji:'🥩', stars:5, badge:'🔥 Bestseller' },
-  { id:2,  name:'Smokie Pasua',   price:80,   emoji:'🌭', stars:5, badge:'⚡ Quick Bite' },
-  { id:3,  name:'Samosa (3 pcs)', price:120,  emoji:'🔺', stars:5, badge:'🌿 Veg'        },
-  { id:4,  name:'Pilau Special',  price:280,  emoji:'🍚', stars:5, badge:'🏆 Chef Pick'  },
-  { id:5,  name:'Mishkaki',       price:200,  emoji:'🍢', stars:5, badge:'🔥 Spicy'      },
-  { id:6,  name:'Mandazi (4pcs)', price:60,   emoji:'🍩', stars:5, badge:'🍯 Sweet'      },
+  {
+    id:    1,
+    name:  'Nyama Choma',
+    price: 650,
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80',
+    stars: 5,
+    badge: '🔥 Bestseller',
+  },
+  {
+    id:    2,
+    name:  'Smokie Pasua',
+    price: 80,
+    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80',
+    stars: 5,
+    badge: '⚡ Quick Bite',
+  },
+  {
+    id:    3,
+    name:  'Samosa (3 pcs)',
+    price: 120,
+    image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&q=80',
+    stars: 5,
+    badge: '🌿 Veg',
+  },
+  {
+    id:    4,
+    name:  'Pilau Special',
+    price: 280,
+    image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&q=80',
+    stars: 5,
+    badge: '🏆 Chef Pick',
+  },
+  {
+    id:    5,
+    name:  'Mishkaki',
+    price: 200,
+    image: 'https://images.unsplash.com/photo-1529694157872-4e0c0f3b238b?w=400&q=80',
+    stars: 5,
+    badge: '🔥 Spicy',
+  },
+  {
+    id:    6,
+    name:  'Mandazi (4pcs)',
+    price: 60,
+    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80',
+    stars: 5,
+    badge: '🍯 Sweet',
+  },
 ]
 
 const Home = () => {
@@ -109,25 +153,29 @@ const Home = () => {
           box-shadow: 0 4px 24px rgba(0,0,0,0.07);
           font-family: 'Nunito', sans-serif;
         }
+
+        /* ── HERO IMAGE ── */
         .hero-right {
           position: relative; display: flex;
           align-items: center; justify-content: center;
         }
         .img-wrap {
           width: 360px; height: 400px; border-radius: 36px;
-          background: linear-gradient(145deg, #F7AC42 0%, #E8441A 100%);
-          display: flex; align-items: center; justify-content: center;
+          overflow: hidden;
           box-shadow: 0 24px 64px rgba(232,68,26,0.22);
           position: relative;
         }
-        .main-emoji { font-size: 9rem; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.18)); }
+        .img-wrap img {
+          width: 100%; height: 100%;
+          object-fit: cover;
+        }
         .float-card {
           position: absolute; background: white; border-radius: 16px;
           padding: 0.85rem 1.1rem; box-shadow: 0 8px 28px rgba(0,0,0,0.1);
           display: flex; align-items: center; gap: 0.65rem;
           animation: floatUp 3s ease-in-out infinite;
         }
-        .float-card.top-left { top: 0.8rem;  left: -2.5rem; animation-delay: 0s;   }
+        .float-card.top-left  { top: 0.8rem;  left: -2.5rem; animation-delay: 0s;   }
         .float-card.bot-right { bottom: 4rem; right: -2.5rem; animation-delay: 1.5s; }
         @keyframes floatUp {
           0%, 100% { transform: translateY(0);    }
@@ -190,12 +238,20 @@ const Home = () => {
           flex-shrink: 0;
         }
         .bs-card:hover { transform: translateY(-4px); box-shadow: 0 12px 48px rgba(0,0,0,0.11); border-color: rgba(232,68,26,0.12); }
-        .bs-ph {
+
+        /* ✅ Real food image styles */
+        .bs-img {
           width: 100%; height: 130px;
-          display: flex; align-items: center; justify-content: center;
+          object-fit: cover;
+          display: block;
+        }
+        .bs-img-fallback {
+          width: 100%; height: 130px;
+          display: none; align-items: center; justify-content: center;
           font-size: 3.5rem;
           background: linear-gradient(135deg, #FDEBD0, #FEF3E8);
         }
+
         .bs-body { padding: 0.9rem; }
         .bs-badge {
           display: inline-block; background: rgba(232,68,26,0.1); color: #E8441A;
@@ -211,11 +267,11 @@ const Home = () => {
           padding: 0.3rem 0.85rem; border-radius: 50px;
           font-size: 0.73rem; font-weight: 800; cursor: pointer;
           font-family: 'Nunito', sans-serif; transition: all 0.2s;
+          text-decoration: none; display: inline-block;
         }
         .bs-buy:hover { background: #c93510; }
-        .bs-buy.added { background: #2D9E5F; }
 
-        /* ── FOOTER STRIP ── */
+        /* ── CONTACT STRIP ── */
         .contact-strip {
           background: #1C1C1C;
           padding: 2rem 3rem;
@@ -278,8 +334,8 @@ const Home = () => {
             delivered hot to your door in 30 minutes flat.
           </p>
           <div className="hero-btns">
-            <a href="/menu" className="btn-red">Order Now 🍲</a>
-            <a href="/menu" className="btn-dark">Our Menu</a>
+            <Link to="/menu" className="btn-red">Order Now 🍲</Link>
+            <Link to="/menu" className="btn-dark">Our Menu</Link>
           </div>
           <div className="hero-pills">
             <div className="pill">🛵 Delivery in 30 min</div>
@@ -289,8 +345,12 @@ const Home = () => {
         </div>
 
         <div className="hero-right">
+          {/* ✅ Real hero food image replacing the emoji */}
           <div className="img-wrap">
-            <span className="main-emoji">🥩</span>
+            <img
+              src="https://images.unsplash.com/photo-1544025162-d76694265947?w=720&q=85"
+              alt="Nyama Choma — Chacha Street Eats"
+            />
           </div>
           <div className="float-card top-left">
             <span className="fc-icon">👨‍🍳</span>
@@ -329,19 +389,29 @@ const Home = () => {
             <div className="sec-label">🔥 Hot Right Now</div>
             <div className="sec-title">Our Best Seller Dishes 🔥</div>
           </div>
-          <a href="/menu" className="see-all">See Full Menu →</a>
+          <Link to="/menu" className="see-all">See Full Menu →</Link>
         </div>
         <div className="bs-row">
           {BESTSELLERS.map(item => (
             <div key={item.id} className="bs-card">
-              <div className="bs-ph">{item.emoji}</div>
+              {/* ✅ Real food image with emoji fallback */}
+              <img
+                className="bs-img"
+                src={item.image}
+                alt={item.name}
+                onError={e => {
+                  e.target.style.display = 'none'
+                  e.target.nextSibling.style.display = 'flex'
+                }}
+              />
+              <div className="bs-img-fallback">🍽️</div>
               <div className="bs-body">
                 <div className="bs-badge">{item.badge}</div>
                 <div className="bs-name">{item.name}</div>
                 <div className="bs-stars">{'★'.repeat(item.stars)}</div>
                 <div className="bs-footer">
                   <span className="bs-price">KSh {item.price}</span>
-                  <button className="bs-buy">Order</button>
+                  <Link to="/menu" className="bs-buy">Order</Link>
                 </div>
               </div>
             </div>
