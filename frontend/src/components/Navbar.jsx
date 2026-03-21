@@ -32,24 +32,6 @@ const Navbar = () => {
           align-items: center;
           text-decoration: none;
         }
-        .nav-logo-box {
-          width: 38px;
-          height: 38px;
-          background: #E8441A;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.2rem;
-          box-shadow: 0 4px 12px rgba(232, 68, 26, 0.3);
-          flex-shrink: 0;
-        }
-        .nav-logo-text {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #1C1C1C;
-        }
         .nav-links {
           display: flex;
           align-items: center;
@@ -106,6 +88,40 @@ const Navbar = () => {
           align-items: center;
         }
         .btn-register:hover { background: #E8441A; color: white; }
+        .btn-orders {
+          background: transparent;
+          border: 1.5px solid #ddd;
+          color: #1C1C1C;
+          padding: 0.5rem 1.3rem;
+          border-radius: 50px;
+          cursor: pointer;
+          font-family: 'Nunito', sans-serif;
+          font-size: 0.88rem;
+          font-weight: 700;
+          transition: all 0.2s;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+        }
+        .btn-orders:hover { border-color: #E8441A; color: #E8441A; }
+        .btn-admin {
+          background: rgba(232,68,26,0.1);
+          border: 1.5px solid rgba(232,68,26,0.3);
+          color: #E8441A;
+          padding: 0.5rem 1.3rem;
+          border-radius: 50px;
+          cursor: pointer;
+          font-family: 'Nunito', sans-serif;
+          font-size: 0.88rem;
+          font-weight: 800;
+          transition: all 0.2s;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+        }
+        .btn-admin:hover { background: #E8441A; color: white; }
         .btn-cart {
           position: relative;
           background: #E8441A;
@@ -153,26 +169,31 @@ const Navbar = () => {
           transition: all 0.2s;
         }
         .btn-logout:hover { border-color: #E8441A; color: #E8441A; }
+        .nav-greeting {
+          font-size: 0.85rem; font-weight: 700; color: #999;
+          white-space: nowrap;
+        }
 
         @media (max-width: 768px) {
           .navbar { padding: 0 1.5rem; }
           .nav-links { display: none; }
+          .nav-greeting { display: none; }
         }
         @media (max-width: 480px) {
-          .nav-logo-text { display: none; }
+          .btn-orders { display: none; }
         }
       `}</style>
 
       <nav className="navbar">
-        
-        
-    <Link to="/" className="nav-logo">
-  <img
-    src={logo}
-    alt="Chacha Street Eats"
-    style={{ height: '55px', objectFit: 'contain' }}
-  />
-</Link>
+
+        {/* ── Logo ── */}
+        <Link to="/" className="nav-logo">
+          <img
+            src={logo}
+            alt="Chacha Street Eats"
+            style={{ height: '55px', objectFit: 'contain' }}
+          />
+        </Link>
 
         {/* ── Middle Links ── */}
         <div className="nav-links">
@@ -186,9 +207,15 @@ const Navbar = () => {
         <div className="nav-right">
           {user ? (
             <>
-              <span style={{ fontSize: '.85rem', fontWeight: 700, color: '#999' }}>
-                Hey {user.username || user.email}! 👋
-              </span>
+              <span className="nav-greeting">Hey {user.username}! 👋</span>
+              <Link to="/orders" className={`btn-orders ${location.pathname === '/orders' ? 'active' : ''}`}>
+                📦 My Orders
+              </Link>
+              {user.role === 'admin' && (
+                <Link to="/admin" className="btn-admin">
+                  ⚙️ Admin
+                </Link>
+              )}
               <button className="btn-logout" onClick={logout}>Logout</button>
             </>
           ) : (
