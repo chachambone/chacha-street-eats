@@ -7,7 +7,7 @@ from flask_mail import Mail
 from dotenv import load_dotenv
 import os
 
-from models import db, TokenBlocklist
+from models import db, TokenBlocklist, User
 
 # ======================
 # App Setup
@@ -19,7 +19,7 @@ app = Flask(__name__)
 # ======================
 # Config
 # ======================
-app.config["SQLALCHEMY_DATABASE_URI"]        = "sqlite:///chacha.db"
+app.config["SQLALCHEMY_DATABASE_URI"]        = os.getenv("DATABASE_URL", "sqlite:///chacha.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 app.config["JWT_SECRET_KEY"]           = os.getenv("JWT_SECRET_KEY", "chacha-secret-2026")
@@ -40,16 +40,12 @@ db.init_app(app)
 migrate = Migrate(app, db)
 CORS(app)
 
-# ✅ FIX: ONE JWTManager for the entire app — auth.py no longer creates its own.
-# The blocklist loaders are registered HERE so they actually fire on revoked tokens.
-jwt     = JWTManager(app)
-bcrypt  = Bcrypt(app)
-mail    = Mail(app)
+jwt    = JWTManager(app)
+bcrypt = Bcrypt(app)
+mail   = Mail(app)
 
 # ======================
-# JWT Token Blocklist (powers logout / token revocation)
-# ✅ FIX: These were previously registered on an orphaned JWTManager in auth.py
-# and were silently doing nothing. Now they're on the real instance.
+# JWT Token Blocklist
 # ======================
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
@@ -68,11 +64,13 @@ from views.auth   import auth_bp
 from views.menu   import menu_bp
 from views.orders import orders_bp
 from views.user   import user_bp
+from views.admin  import admin_bp
 
 app.register_blueprint(auth_bp,   url_prefix="/api/auth")
 app.register_blueprint(menu_bp,   url_prefix="/api")
 app.register_blueprint(orders_bp, url_prefix="/api/orders")
 app.register_blueprint(user_bp,   url_prefix="/api/user")
+app.register_blueprint(admin_bp,  url_prefix="/api/admin")
 
 # ======================
 # Health Check
@@ -80,6 +78,21 @@ app.register_blueprint(user_bp,   url_prefix="/api/user")
 @app.route("/")
 def home():
     return jsonify({"message": "Chacha Street Eats Backend Live! 🔥🇰🇪"})
+
+# ======================
+# Admin Setup Route (protected by secret key)
+# Usage: /setup-admin/your-secret-key
+# ======================
+@app.route("/setup-admin/<secret>")
+def setup_admin(secret):
+    if secret != os.getenv("ADMIN_SECRET", "chacha-admin-2026"):
+        return jsonify({"error": "Unauthorized"}), 403
+    u = User.query.filter_by(email="mbonemarycharity@gmail.com").first()
+    if u:
+        u.role = "admin"
+        db.session.commit()
+        return "Admin role set! 🔥"
+    return "User not found", 404
 
 # ======================
 # Run Server
