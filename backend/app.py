@@ -9,6 +9,7 @@ import os
 
 from models import db, TokenBlocklist, User
 
+
 # ======================
 # App Setup
 # ======================
